@@ -8,7 +8,7 @@ import 'medium-editor/dist/css/medium-editor.css'
 import 'medium-editor/dist/css/themes/default.css'
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import { Jumbotron, Button, Alert, Modal, ModalHeader, ModalBody, ModalFooter, Input,Form, FormGroup} from 'reactstrap';
+import { Jumbotron, Button, Alert, Modal, ModalHeader, ModalBody, ModalFooter, Input,NavItem, NavLink} from 'reactstrap';
 
 const NewArticle = () => {
   const [editor, setEditor] = useState(null)
@@ -65,7 +65,15 @@ const AllArticles = () => {
 
   const contract = useSelector(({ contract }) => contract)
 
-  const toggle = () => setModal(!modal);
+  const toggle = (e) => {
+    setModal(!modal);
+    // console.log(e.target.name);
+    // console.log(articles[e.target.name]);
+    if (e.target.id="Editer"){
+      setIdArticle(e.target.name)
+      setUpdateArticle(articles[e.target.name]);
+    }
+  }
 
   
   const updateArtcile = async(evt) =>{
@@ -109,31 +117,36 @@ const AllArticles = () => {
     // console.log(articles.length);
     // articles.map(x => console.log(x));
   }, [contract, setArticles])
-  return <div>{articles.map((article, index) => <div> 
-                                                  <Jumbotron id={index}> 
+  return <div>{articles.map((article, index) => <div id={index}> 
+                                                  <Jumbotron key={index}> 
                                                     <h5 className="display-6">Article {index}</h5>
                                                     <hr className="my-2" />
                                                     <p>{article}</p>  
                                                     <p className="lead"></p>
-                                                      <Input type="textarea" placeholder={article} name={index} className={styles.editable} onChange={onTodoChange}/>
+                                                      {/* <Input type="textarea" placeholder={article} name={index} className={styles.editable} onChange={onTodoChange}/>
                                                       <Button color="danger"  onClick={updateArtcile}>
                                                         Save
-                                                      </Button>                                                 
+                                                      </Button>                                                 */}
 
-                                                    {/* <Button hidden={modal} variant="primary" onClick={toggle}>
-                                                      Editer
-                                                    </Button>   
+                                                    <div class="nav">
+                                                      <Button hidden={modal} variant="primary" onClick={toggle} name={index} id="Editer">
+                                                        Editer
+                                                      </Button>   
+
+                                                      <NavLink calss="my-2 my-lg-0" href="#">Historique</NavLink>
+                                                    </div>
                                                     
                                                     <Modal isOpen={modal} toggle={toggle} className=''>
-                                                      <ModalHeader toggle={toggle}>Modification article {index}</ModalHeader>
+                                                      <ModalHeader toggle={toggle}>Modification article {idArticle}</ModalHeader>
                                                       <ModalBody>
-                                                      <Input type="textarea" placeholder={article} name={index} className={styles.editable} onChange={onTodoChange}/>
+                                                      <Input type="textarea" value={updateArticle} name={idArticle} className={styles.editable} onChange={onTodoChange}/>
                                                       </ModalBody>
+                                                    
                                                       <ModalFooter>
-                                                        <Button color="primary" onClick={toggle, updateArtcile}>Enregister</Button>{' '}
+                                                        <Button color="primary" onClick={toggle, updateArtcile}>Enregister</Button>
                                                         <Button color="secondary" onClick={toggle}>Cancel</Button>
                                                       </ModalFooter>
-                                                    </Modal> */}
+                                                    </Modal>
 
                                                   </Jumbotron>
                                                  
