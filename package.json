@@ -47,7 +47,7 @@
     ]
   },
   "devDependencies": {
-    "prettier": "^2.1.2",
-    "truffle": "^5.1.53"
+    "prettier": "^2.2.1",
+    "truffle": "^5.1.55"
   }
 }
