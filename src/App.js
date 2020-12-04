@@ -19,18 +19,18 @@ const NewArticle = () => {
   }, [setEditor])
 
   const onSubmit = async (evt) => {
-    evt.preventDefault();
+
     var content = document.getElementsByClassName(styles.editable)[0].firstElementChild.innerHTML;
+    console.log(content);
+    // Ethereum.addArticle(content, contract);
 
     try {
       await contract.methods.createArticle(content).send({ from: contract.account });
     } catch (error) {
-      console.error(error)
+      console.error("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEe"+error)
     }
 
-
-
-    contract.methods.getAllIds().call().then(console.log)
+    // contract.methods.getAllIds().call().then(console.log)
 
   }
 
@@ -62,6 +62,10 @@ const AllArticles = () => {
   const [modal, setModal] = useState(false);
   const [updateArticle, setUpdateArticle] = useState('');
   const [idArticle, setIdArticle] = useState(null);
+  const [modalHistory, setModalHistory] = useState(false);
+  const [articleHistory, setArticleHistory] = useState([]);
+  const [myMap, setMyMap] = useState(new Map());
+  const [idHistory, setIdHistory] = useState(0);
 
   const contract = useSelector(({ contract }) => contract)
 
@@ -75,7 +79,12 @@ const AllArticles = () => {
     }
   }
 
-  
+  const toggleHistory = (e) => {
+    setModalHistory(!modalHistory);
+    if (!modalHistory){
+      setIdHistory(parseInt(e.target.name, 10));
+    }
+  }
   const updateArtcile = async(evt) =>{
     evt.preventDefault();
     console.log("update article ----------->")
@@ -84,20 +93,84 @@ const AllArticles = () => {
 
     try {
       await contract.methods.updateArticle(idArticle,updateArticle).send({ from: contract.account });
+      articles[idArticle] = updateArticle;
+
+      setModal(!modal);
     } catch (error) {
       console.error(error)
     }
   }
 
+  const getHistory = async (id) =>{
+    var countofHistory = [];
+    var historyRes = [];
+    countofHistory = await contract.methods.getHistoricalCount(id).call();
+  
+    for (var j = 0; j < countofHistory; j++) {
+      const history = await contract.methods.getHistorical(id, j).call();
+      historyRes.push(history);
+    }
+    setMyMap(myMap.set(id,historyRes));
+  }
+
   const loadArticles = async() =>{
+
+    // var re = await Ethereum.loadArticles(contract);
+    // var resArticle = [];
+    // for (let [key, value] of re[0]) {
+    //   resArticle.push(value);
+    // }
+    // setArticles(articles.concat(resArticle));
+    // for (let [key, value] of re[1]) {
+    //   console.log(value.length);
+    //   setMyMap(myMap.set(parseInt(key,10),[value]));
+    // }
+    
+
     var recevedArticles = [];
     var res = [];
+
+    
+
     recevedArticles = await contract.methods.getAllIds().call();
     for (var i = 0; i < recevedArticles.length; i++) {
       const article = await contract.methods.articleContent(recevedArticles[i]).call();
       res.push(article);
+
+      var countofHistory = [];
+      var historyRes = [];
+      countofHistory = await contract.methods.getHistoricalCount(i).call();
+    
+      for (var j = 0; j < countofHistory; j++) {
+        const history = await contract.methods.getHistorical(i, j).call();
+        historyRes.push(history);
+      }
+      setMyMap(myMap.set(i,historyRes));
     }
     setArticles(articles.concat(res));
+
+    for (let [key, value] of myMap) {
+      value.map(x =>{
+        console.log("---g>"+x)
+      })
+      console.log(key + " = " + value);
+      }
+  }
+
+  const historyOfArtivle = async (evt) => {
+    setModalHistory(!modalHistory);
+    var countofHistory = [];
+    var res = [];
+    countofHistory = await contract.methods.getHistoricalCount(evt.target.name).call();
+    
+    for (var i = 0; i <= countofHistory; i++) {
+      console.log("parcours iiiiiiii "+i);
+      const history = await contract.methods.getHistorical(evt.target.name, i).call();
+      console.log("history "+history);
+      res.push(history);
+    }
+    setArticleHistory(articleHistory.concat(res));
+
   }
 
   const onTodoChange = (evt) =>{
@@ -113,42 +186,45 @@ const AllArticles = () => {
     if (contract) {
       loadArticles();
     }
-    // console.log("gggggggggggggggg");
-    // console.log(articles.length);
-    // articles.map(x => console.log(x));
   }, [contract, setArticles])
-  return <div>{articles.map((article, index) => <div id={index}> 
-                                                  <Jumbotron key={index}> 
+  return <div>{articles.map((article, index) => <div id={index} key={index+ "_artcileDiv"}> 
+                                                  <Jumbotron key={index+ "_artcile"}> 
                                                     <h5 className="display-6">Article {index}</h5>
                                                     <hr className="my-2" />
                                                     <p>{article}</p>  
                                                     <p className="lead"></p>
-                                                      {/* <Input type="textarea" placeholder={article} name={index} className={styles.editable} onChange={onTodoChange}/>
-                                                      <Button color="danger"  onClick={updateArtcile}>
-                                                        Save
-                                                      </Button>                                                 */}
 
-                                                    <div class="nav">
-                                                      <Button hidden={modal} variant="primary" onClick={toggle} name={index} id="Editer">
+                                                    <div className="nav">
+                                                      <Button variant="primary" onClick={toggle} name={index} id="Editer">
                                                         Editer
                                                       </Button>   
 
-                                                      <NavLink calss="my-2 my-lg-0" href="#">Historique</NavLink>
+                                                      <NavLink calss="my-2 my-lg-0" href="#" name={index}  onClick={toggleHistory}>Historique</NavLink>
                                                     </div>
-                                                    
-                                                    <Modal isOpen={modal} toggle={toggle} className=''>
+                                                  </Jumbotron>
+                                                  <Modal isOpen={modal} toggle={toggle} className=''>
                                                       <ModalHeader toggle={toggle}>Modification article {idArticle}</ModalHeader>
                                                       <ModalBody>
                                                       <Input type="textarea" value={updateArticle} name={idArticle} className={styles.editable} onChange={onTodoChange}/>
                                                       </ModalBody>
                                                     
                                                       <ModalFooter>
-                                                        <Button color="primary" onClick={toggle, updateArtcile}>Enregister</Button>
+                                                        <Button color="primary" onClick={updateArtcile}>Enregister</Button>
                                                         <Button color="secondary" onClick={toggle}>Cancel</Button>
                                                       </ModalFooter>
                                                     </Modal>
 
-                                                  </Jumbotron>
+                                                    <Modal isOpen={modalHistory} toggle={toggleHistory} className=''>
+                                                      <ModalHeader toggle={toggleHistory}>Historique de l'aticle {idHistory}</ModalHeader>
+                                                      <ModalBody>  
+                                                                    
+                                                        {myMap.get(idHistory).map(x => <p key={idHistory}_history> {myMap.get(idHistory).indexOf(x) > 0 && <hr className="my-2" />} {x} </p>)}
+                                                      </ModalBody>
+                                                    
+                                                      <ModalFooter>
+                                                        <Button color="secondary" onClick={toggleHistory}>Cancel</Button>
+                                                      </ModalFooter>
+                                                    </Modal>
                                                  
                                                   
 
@@ -170,6 +246,7 @@ const App = () => {
         <Alert color="info">
           Welcome to Decentralized Wikipedia
         </Alert>
+        
       </div>
       <Switch>
         <Route path="/article/new">

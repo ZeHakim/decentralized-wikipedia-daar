@@ -21,4 +21,40 @@ const connect = async dispatch => {
   }
 }
 
-export { connect }
+const addArticle  = async (content, contract) => {
+  console.log("dans sevice");
+  try {
+    await contract.methods.createArticle(content).send({ from: contract.account });
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+
+async function loadArticles (contract) {
+  var recevedArticles = [];
+  var articlesListe = [];
+
+  var articlesHistoty = new Map();
+  var articles = new Map();
+
+  recevedArticles = await contract.methods.getAllIds().call();
+
+  for (var i = 0; i < recevedArticles.length; i++) {
+    const article = await contract.methods.articleContent(recevedArticles[i]).call();
+    articlesListe.push(article);
+    articles.set(recevedArticles[i], article);
+
+    var historyRes = [];
+    var countofHistory = await contract.methods.getHistoricalCount(i).call();
+  
+    for (var j = 0; j < countofHistory; j++) {
+      const history = await contract.methods.getHistorical(i, j).call();
+      historyRes.push(history);
+    }
+    articlesHistoty.set(recevedArticles[i], historyRes);
+  }
+  return [articles, articlesHistoty];
+}
+
+export {connect, loadArticles}
