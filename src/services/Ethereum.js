@@ -2,6 +2,7 @@ import Web3 from 'web3'
 import ContractInterface from '../build/contracts/Wikipedia.json'
 import { connectEthereum, getAllArticles, historical } from '../store/reducers/root'
 import store from '../store'
+import Fortmatic from 'fortmatic'
 
 const connect = async dispatch => {
   if (window.ethereum) {
@@ -18,8 +19,26 @@ const connect = async dispatch => {
       console.error(error)
     }
   } else {
-    console.log('Not Dapp browser.')
-  }
+    // Partie qui gere l'integration de Fortmatic
+    const customNodeOptions = {
+      rpcUrl: 'http://127.0.0.1:7545', // your own node url
+      chainId: 1337 // chainId of your own node
+      }
+      const fm = new Fortmatic('pk_test_7DBA38B8B256024A', customNodeOptions);
+      window.web3 = new Web3(fm.getProvider());
+      try {
+        const [account]= await window.web3.eth.getAccounts(); //Fortmatic
+        const contract = new window.web3.eth.Contract(
+          ContractInterface.abi,
+          ContractInterface.networks['5777'].address,
+          { from: account }
+        )
+        dispatch(connectEthereum({ account, contract }))
+      } catch (error) {
+        console.error(error)
+      }
+      // console.log('Not Dapp browser.')
+    }
 }
 
 // implimentaion des services de façon plus propre 
