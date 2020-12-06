@@ -13,9 +13,11 @@ const NewArticle = () => {
   const [editor, setEditor] = useState(null)
   const contract = useSelector(({ contract }) => contract)
 
+  // permet de faire appel au service d'ajout d'article
   const dispatch = useDispatch()
   const onSubmit = () => dispatch(Ethereum.addArticle(editor))
-
+  
+  // Permet de recuperer la valuer de l'input ajout artcile
   const inputArticle = (event) => {
     setEditor(event.target.value)
   }
@@ -71,6 +73,7 @@ const AllArticles = () => {
 
   const contract = useSelector(({ contract }) => contract)
 
+  // Permet d'afficher et de cacher le modal de mise a jour d'un article
   const toggle = (e) => {
     setModal(!modal);
     if (e.target.id="Editer"){
@@ -78,7 +81,7 @@ const AllArticles = () => {
       setUpdateArticle(articles[e.target.name]);
     }
   }
-
+  // Permet d'afficher et de cacher le modal de l'historique d'un article
   const toggleHistory = (e) => {
     setModalHistory(!modalHistory);
     if (!modalHistory){
@@ -89,6 +92,7 @@ const AllArticles = () => {
   // const dispatch = useDispatch()
   // const updateArtcile1 = () => dispatch(Ethereum.updateArticle(idArticle,updateArticle))
 
+  // Peremt de mettre à jour un article
   const updateArtcile = async(evt) =>{
     evt.preventDefault();
     try {
@@ -101,6 +105,7 @@ const AllArticles = () => {
     getHistory(idArticle);
   }
 
+  // Permet de recuperer l'historique d'un article
   const getHistory = async (id) =>{
     var countofHistory = [];
     var historyRes = [];
@@ -120,6 +125,8 @@ const AllArticles = () => {
     // for (var i = 0; i < allarticles.length; i++) {
     //   console.log(allarticles[i]);
     // }
+
+  // Permet de charger tous les articles et leur historique  
   const loadArticles = async() =>{
     var recevedArticles = [];
     var res = [];
@@ -142,6 +149,7 @@ const AllArticles = () => {
     setArticles(articles.concat(res));
   }
 
+  // permet de recharger l'historique des article mais non utlisée
   const historyOfArticle = async (evt) => {
     setModalHistory(!modalHistory);
     var countofHistory = [];
@@ -156,6 +164,7 @@ const AllArticles = () => {
 
   }
 
+  // permet de recuperer le contenu du input lors de mise a jour
   const onTodoChange = (evt) =>{
     const txt = evt.target.value;
     setUpdateArticle(txt);
