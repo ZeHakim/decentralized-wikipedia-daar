@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Switch, Link, Route } from 'react-router-dom'
 import * as Ethereum from './services/Ethereum'
 import styles from './App.module.css'
-import MediumEditor from 'medium-editor'
 import 'medium-editor/dist/css/medium-editor.css'
 import 'medium-editor/dist/css/themes/default.css'
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -14,25 +13,35 @@ const NewArticle = () => {
   const [editor, setEditor] = useState(null)
   const contract = useSelector(({ contract }) => contract)
 
-  useEffect(() => {
-    setEditor(new MediumEditor(`.${styles.editable}`))
+  const dispatch = useDispatch()
+  const onSubmit = () => dispatch(Ethereum.addArticle(editor))
+
+  const inputArticle = (event) => {
+    setEditor(event.target.value)
+  }
+  useEffect(() => { 
   }, [setEditor])
 
-  const onSubmit = async (evt) => {
+  // Version 0 d'ajout d'article 
+  // const onSubmit = async (evt) => {
 
-    var content = document.getElementsByClassName(styles.editable)[0].firstElementChild.innerHTML;
-    try {
-      await contract.methods.createArticle(content).send({ from: contract.account });
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  //   var content = document.getElementsByClassName(styles.editable)[0].firstElementChild.innerHTML;
+
+  //   var s = await contract.methods.createArticle(content).send({ from: contract.account });
+  //   console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+  //   console.log(s)
+  //   // try {
+  //   //   await contract.methods.createArticle(content).send({ from: contract.account });
+  //   // } catch (error) {
+  //   //   console.error(error)
+  //   // }
+  // }
 
   return (
     <form onSubmit={onSubmit}>
       <div className={styles.subTitle}>New article</div>
       <div className={styles.mediumWrapper}>
-        <textarea className={styles.editable}/>
+        <Input onChange={inputArticle} />
       </div>
       <input type="submit" value="Ajouter" />
     </form>
@@ -76,6 +85,10 @@ const AllArticles = () => {
       setIdHistory(parseInt(e.target.name, 10));
     }
   }
+
+  // const dispatch = useDispatch()
+  // const updateArtcile1 = () => dispatch(Ethereum.updateArticle(idArticle,updateArticle))
+
   const updateArtcile = async(evt) =>{
     evt.preventDefault();
     try {
@@ -100,11 +113,14 @@ const AllArticles = () => {
     setMyMap(myMap.set(id,historyRes));
   }
 
-  const loadArticles = async() =>{
-    
     // const allarticles = useSelector(({ articles }) => articles)
     // const history = useSelector(({ historical }) => historical)
-
+    // console.log(allarticles);
+    // console.log(history);
+    // for (var i = 0; i < allarticles.length; i++) {
+    //   console.log(allarticles[i]);
+    // }
+  const loadArticles = async() =>{
     var recevedArticles = [];
     var res = [];
 
@@ -124,13 +140,6 @@ const AllArticles = () => {
       setMyMap(myMap.set(i,historyRes));
     }
     setArticles(articles.concat(res));
-
-    // for (let [key, value] of myMap) {
-    //   value.map(x =>{
-    //     console.log("---g>"+x)
-    //   })
-    //   console.log(key + " = " + value);
-    //   }
   }
 
   const historyOfArticle = async (evt) => {
@@ -140,9 +149,7 @@ const AllArticles = () => {
     countofHistory = await contract.methods.getHistoricalCount(evt.target.name).call();
     
     for (var i = 0; i <= countofHistory; i++) {
-      console.log("parcours iiiiiiii "+i);
       const history = await contract.methods.getHistorical(evt.target.name, i).call();
-      console.log("history "+history);
       res.push(history);
     }
     setArticleHistory(articleHistory.concat(res));
@@ -151,12 +158,10 @@ const AllArticles = () => {
 
   const onTodoChange = (evt) =>{
     const txt = evt.target.value;
-
     setUpdateArticle(txt);
     setIdArticle(parseInt(evt.target.name, 10));
-
-    console.log(updateArticle);
   }
+
   useEffect(() => {
     loadArticles();
   }, [contract, setArticles])

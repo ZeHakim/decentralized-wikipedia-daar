@@ -43,15 +43,36 @@ const connect = async dispatch => {
 
 // implimentaion des services de façon plus propre 
 // PAS ENCORE OPP
-const addArticle  = async (content, contract) => {
+
+const addArticle = (content) => async dispatch => {
   console.log("dans sevice");
+  const { contract } = store.getState();
   try {
     await contract.methods.createArticle(content).send({ from: contract.account });
   } catch (error) {
     console.error(error)
   }
+  // Mise à jour des articles dans l'application
+  var articles = getArticles(contract);
+  dispatch(getAllArticles({articles}));
+
+  // Mise à jour de l'historique de l'application
+  var allHistorical = getAllHistory(articles,contract);
+  dispatch(historical({allHistorical}));
 }
 
+const updateArticle = (id,content) => async dispatch => {
+  console.log("dans sevice");
+  const { contract } = store.getState();
+  await contract.methods.updateArticle(id,content).send({ from: contract.account });
+  // Mise à jour des articles dans l'application
+  var articles = getArticles(contract);
+  dispatch(getAllArticles({articles}));
+
+  // Mise à jour de l'historique de l'application
+  var allHistorical = getAllHistory(articles,contract);
+  dispatch(historical({allHistorical}));
+}
 const loadAllArticles = async dispatch => {
 
   const { contract } = store.getState();
@@ -102,4 +123,4 @@ const loadAllArticles = async dispatch => {
     return historyRes;
   }
 
-export {connect, loadAllArticles}
+export {connect, addArticle}
