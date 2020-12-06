@@ -1,4 +1,4 @@
-import { useEffect, useState} from 'react'
+import { useEffect, useState, useGlobal} from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Switch, Link, Route } from 'react-router-dom'
 import * as Ethereum from './services/Ethereum'
@@ -8,7 +8,7 @@ import 'medium-editor/dist/css/medium-editor.css'
 import 'medium-editor/dist/css/themes/default.css'
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import { Jumbotron, Button, Alert, Modal, ModalHeader, ModalBody, ModalFooter, Input,NavItem, NavLink} from 'reactstrap';
+import { Jumbotron, Button, Alert, Modal, ModalHeader, ModalBody, ModalFooter, Input  , NavLink} from 'reactstrap';
 
 const NewArticle = () => {
   const [editor, setEditor] = useState(null)
@@ -21,17 +21,11 @@ const NewArticle = () => {
   const onSubmit = async (evt) => {
 
     var content = document.getElementsByClassName(styles.editable)[0].firstElementChild.innerHTML;
-    console.log(content);
-    // Ethereum.addArticle(content, contract);
-
     try {
       await contract.methods.createArticle(content).send({ from: contract.account });
     } catch (error) {
-      console.error("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEe"+error)
+      console.error(error)
     }
-
-    // contract.methods.getAllIds().call().then(console.log)
-
   }
 
   return (
@@ -40,21 +34,20 @@ const NewArticle = () => {
       <div className={styles.mediumWrapper}>
         <textarea className={styles.editable}/>
       </div>
-      <input type="submit" value="Submit" />
+      <input type="submit" value="Ajouter" />
     </form>
   )
 }
 
 const Home = () => {
   return (
-    <div className={styles.links}>
-      <Link to="/">Home</Link>
-      <Link to="/article/new">Add an article</Link>
-      <Link to="/article/all">All articles</Link>
-    </div>
+    <p>
+      Welcome to the DAAR project. The idea will be to implement a 
+      complete Wikipedia in a decentralized way, on Ethereum. 
+      This will have cool side effects, like not be forced to pay for servers.
+    </p>
   )
 }
-
 
 
 const AllArticles = () => {
@@ -71,10 +64,8 @@ const AllArticles = () => {
 
   const toggle = (e) => {
     setModal(!modal);
-    // console.log(e.target.name);
-    // console.log(articles[e.target.name]);
     if (e.target.id="Editer"){
-      setIdArticle(e.target.name)
+      setIdArticle(parseInt(e.target.name, 10))
       setUpdateArticle(articles[e.target.name]);
     }
   }
@@ -87,18 +78,14 @@ const AllArticles = () => {
   }
   const updateArtcile = async(evt) =>{
     evt.preventDefault();
-    console.log("update article ----------->")
-    console.log(updateArticle);
-    console.log("id artcile "+idArticle);
-
     try {
       await contract.methods.updateArticle(idArticle,updateArticle).send({ from: contract.account });
       articles[idArticle] = updateArticle;
-
       setModal(!modal);
     } catch (error) {
       console.error(error)
     }
+    getHistory(idArticle);
   }
 
   const getHistory = async (id) =>{
@@ -114,23 +101,12 @@ const AllArticles = () => {
   }
 
   const loadArticles = async() =>{
-
-    // var re = await Ethereum.loadArticles(contract);
-    // var resArticle = [];
-    // for (let [key, value] of re[0]) {
-    //   resArticle.push(value);
-    // }
-    // setArticles(articles.concat(resArticle));
-    // for (let [key, value] of re[1]) {
-    //   console.log(value.length);
-    //   setMyMap(myMap.set(parseInt(key,10),[value]));
-    // }
     
+    // const allarticles = useSelector(({ articles }) => articles)
+    // const history = useSelector(({ historical }) => historical)
 
     var recevedArticles = [];
     var res = [];
-
-    
 
     recevedArticles = await contract.methods.getAllIds().call();
     for (var i = 0; i < recevedArticles.length; i++) {
@@ -149,15 +125,15 @@ const AllArticles = () => {
     }
     setArticles(articles.concat(res));
 
-    for (let [key, value] of myMap) {
-      value.map(x =>{
-        console.log("---g>"+x)
-      })
-      console.log(key + " = " + value);
-      }
+    // for (let [key, value] of myMap) {
+    //   value.map(x =>{
+    //     console.log("---g>"+x)
+    //   })
+    //   console.log(key + " = " + value);
+    //   }
   }
 
-  const historyOfArtivle = async (evt) => {
+  const historyOfArticle = async (evt) => {
     setModalHistory(!modalHistory);
     var countofHistory = [];
     var res = [];
@@ -177,15 +153,12 @@ const AllArticles = () => {
     const txt = evt.target.value;
 
     setUpdateArticle(txt);
-    setIdArticle(evt.target.name);
+    setIdArticle(parseInt(evt.target.name, 10));
 
     console.log(updateArticle);
   }
-
   useEffect(() => {
-    if (contract) {
-      loadArticles();
-    }
+    loadArticles();
   }, [contract, setArticles])
   return <div>{articles.map((article, index) => <div id={index} key={index+ "_artcileDiv"}> 
                                                   <Jumbotron key={index+ "_artcile"}> 
@@ -246,7 +219,11 @@ const App = () => {
         <Alert color="info">
           Welcome to Decentralized Wikipedia
         </Alert>
-        
+        <div className={styles.links}>
+          <Link to="/">Home</Link>
+          <Link to="/article/new">Add an article</Link>
+          <Link to="/article/all">All articles</Link>
+      </div>
       </div>
       <Switch>
         <Route path="/article/new">

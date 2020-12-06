@@ -1,6 +1,7 @@
 import Web3 from 'web3'
 import ContractInterface from '../build/contracts/Wikipedia.json'
-import { connectEthereum } from '../store/reducers/root'
+import { connectEthereum, getAllArticles, historical } from '../store/reducers/root'
+import store from '../store'
 
 const connect = async dispatch => {
   if (window.ethereum) {
@@ -21,6 +22,8 @@ const connect = async dispatch => {
   }
 }
 
+// implimentaion des services de façon plus propre 
+// PAS ENCORE OPP
 const addArticle  = async (content, contract) => {
   console.log("dans sevice");
   try {
@@ -30,31 +33,54 @@ const addArticle  = async (content, contract) => {
   }
 }
 
+const loadAllArticles = async dispatch => {
 
-async function loadArticles (contract) {
-  var recevedArticles = [];
-  var articlesListe = [];
+  const { contract } = store.getState();
 
-  var articlesHistoty = new Map();
-  var articles = new Map();
+  // Mise à jour des articles dans l'application
+  var articles = getArticles(contract);
+  dispatch(getAllArticles({articles}));
 
-  recevedArticles = await contract.methods.getAllIds().call();
-
-  for (var i = 0; i < recevedArticles.length; i++) {
-    const article = await contract.methods.articleContent(recevedArticles[i]).call();
-    articlesListe.push(article);
-    articles.set(recevedArticles[i], article);
-
-    var historyRes = [];
-    var countofHistory = await contract.methods.getHistoricalCount(i).call();
-  
-    for (var j = 0; j < countofHistory; j++) {
-      const history = await contract.methods.getHistorical(i, j).call();
-      historyRes.push(history);
-    }
-    articlesHistoty.set(recevedArticles[i], historyRes);
-  }
-  return [articles, articlesHistoty];
+  // Mise à jour de l'historique de l'application
+  var allHistorical = getAllHistory(articles,contract);
+  dispatch(historical({allHistorical}));
 }
 
-export {connect, loadArticles}
+  //fonction pour qui recupere tous les articles
+  async function getArticles (contract) {
+    var recevedArticles = [];
+    var res = [];
+
+    recevedArticles = await contract.methods.getAllIds().call();
+
+    for (var i = 0; i < recevedArticles.length; i++) {
+      const article = await contract.methods.articleContent(recevedArticles[i]).call();
+      res.push(article);
+    }
+
+    return res;
+  }
+
+  async function getAllHistory (articles,contract) {
+
+    var myMap = new Map();
+
+    for (var i = 0; i < articles.length; i++) {
+      myMap.set(i,getHistory(i,contract));
+    }
+    return myMap;
+  }
+
+  async function getHistory (id, contract) {
+    var countofHistory = [];
+    var historyRes = [];
+    countofHistory = await contract.methods.getHistoricalCount(id).call();
+  
+    for (var j = 0; j < countofHistory; j++) {
+      const history = await contract.methods.getHistorical(id, j).call();
+      historyRes.push(history);
+    }
+    return historyRes;
+  }
+
+export {connect, loadAllArticles}
